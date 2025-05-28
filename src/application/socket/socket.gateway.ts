@@ -24,6 +24,8 @@ class SocketGateway {
 
     // Disconnecting
     socket.on(SocketEvents.DISCONNECTING, async () => {
+      console.log('[socket] disconnecting ', socket.id);
+
       const roomId = SocketRooms[socket.id];
       // already disconnected player
       if (!roomId) return
@@ -38,17 +40,18 @@ class SocketGateway {
 
     // Disconnect
     socket.on(SocketEvents.DISCONNECT, async () => {
+      console.log('[socket] disconnect ', socket.id);
+
       const roomId = SocketRooms[socket.id];
       // already disconnected player
       if (!roomId) return
+      delete SocketRooms[socket.id]
 
       const roomKey = await this.cacheService.getRoomKey(roomId);
       // room not exists
       if (!roomKey) return
 
       await this.cacheService.removePlayerByRoom(roomKey, socket.id);
-
-      console.log('disconnect socket ', socket.id)
     });
 
     // Create room
@@ -90,6 +93,7 @@ class SocketGateway {
         const roomId = SocketRooms[socket.id];
         // already disconnected player
         if (!roomId) return
+        delete SocketRooms[socket.id]
 
         const roomKey = await this.cacheService.getRoomKey(roomId);
         // room not exists
