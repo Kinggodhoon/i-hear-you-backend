@@ -58,14 +58,13 @@ class SocketGateway {
     socket.on(SocketEvents.CREATE_ROOM, async () => {
       try {
         const roomId = await this.roomsService.generateRoomId();
+        console.log('START CREATE ROOM', roomId)
 
         // create room and join room
         await this.cacheService.createRoom(roomId, 8, socket.id);
         socket.join(roomId);
 
         SocketRooms[socket.id] = roomId;
-
-        console.log(SocketRooms)
 
         socketService.emitDataToUser(socket.id, 'CREATE_ROOM', roomId);
       } catch (err) {
@@ -76,6 +75,7 @@ class SocketGateway {
 
     // Modify room
     socket.on(SocketEvents.MODIFY_ROOM, async ({ roomId, maxPlayer }: { roomId: string; maxPlayer: number }) => {
+      console.log('START MODIFY_ROOM')
       try {
         const roomKey = await this.cacheService.getRoomKey(roomId);
         if (!roomKey) throw new Error('Room not exists');
@@ -89,6 +89,7 @@ class SocketGateway {
 
     // Exit room
     socket.on(SocketEvents.EXIT_ROOM, async () => {
+      console.log('START EXIT_ROOM')
       try {
         const roomId = SocketRooms[socket.id];
         // already disconnected player
@@ -108,11 +109,10 @@ class SocketGateway {
 
     // Peer entering to room
     socket.on(SocketEvents.ENTER_ROOM, async ({ roomId }) => {
+      console.log('START ENTER_ROOM')
       try {
         // player cache to room
-        console.log(roomId)
         const roomKey = await this.cacheService.getRoomKey(roomId);
-        console.log(roomKey)
         if (!roomKey) throw new Error('RoomKey not found');
 
         this.cacheService.addPlayerToRoom(roomKey, socket.id);
@@ -130,10 +130,14 @@ class SocketGateway {
 
     // Serve Offer to client
     socket.on(SocketEvents.SERVE_OFFER, ({ socketId, message }) => {
+      console.log('START SERVE_OFFER')
       try {
-        console.log(SocketRooms)
         if (!SocketRooms[socketId]) throw new Error('Player not found');
-        socketService.emitDataToUser(socketId, SocketEvents.SERVE_OFFER, message);
+
+        socketService.emitDataToUser(socketId, SocketEvents.SERVE_OFFER, {
+          senderId: socket.id,
+          ...message,
+        });
       } catch (err) {
         console.error(err);
         socketService.emitErrorToUser(socket.id, 'Something went wrong');
@@ -142,10 +146,14 @@ class SocketGateway {
 
     // Serve Answer to client
     socket.on(SocketEvents.SERVER_ANSWER, ({ socketId, message }) => {
+      console.log('START SERVER_ANSWER')
       try {
-        console.log(SocketRooms)
         if (!SocketRooms[socketId]) throw new Error('Player not found');
-        socketService.emitDataToUser(socketId, SocketEvents.SERVER_ANSWER, message);
+
+        socketService.emitDataToUser(socketId, SocketEvents.SERVER_ANSWER, {
+          senderId: socket.id,
+          ...message,
+        });
       } catch (err) {
         console.error(err);
         socketService.emitErrorToUser(socket.id, 'Something went wrong');
@@ -154,10 +162,14 @@ class SocketGateway {
 
     // Serve Candidate to client
     socket.on(SocketEvents.SERVE_CANDIDATE, ({ socketId, message }) => {
+      console.log('START SERVE_CANDIDATE')
       try {
-        console.log(SocketRooms)
         if (!SocketRooms[socketId]) throw new Error('Player not found');
-        socketService.emitDataToUser(socketId, SocketEvents.SERVE_CANDIDATE, message);
+
+        socketService.emitDataToUser(socketId, SocketEvents.SERVE_CANDIDATE, {
+          senderId: socket.id,
+          ...message,
+        });
       } catch (err) {
         console.error(err);
         socketService.emitErrorToUser(socket.id, 'Something went wrong');
@@ -165,6 +177,7 @@ class SocketGateway {
     });
 
     socket.on(SocketEvents.START_GAME, async ({ roomId }) => {
+      console.log('START START_GAME')
       try {
         const roomKey = await this.cacheService.getRoomKey(roomId);
         if (!roomKey) throw new Error('RoomKey not found');
