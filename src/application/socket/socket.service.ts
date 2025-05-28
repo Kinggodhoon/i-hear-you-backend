@@ -1,4 +1,5 @@
 import { getIO } from '../../../socket-app';
+import { SocketEvents } from './model/socket.model';
 
 class SocketService {
   public emitDataToRoom(roomId: string, event: string, data: any) {
@@ -11,6 +12,12 @@ class SocketService {
     const io = getIO();
 
     io.to(socketId).emit(event, data);
+  }
+
+  public emitErrorToUser(socketId: string, message: string) {
+    const io = getIO();
+
+    io.to(socketId).emit(SocketEvents.ERROR, message);
   }
 }
 

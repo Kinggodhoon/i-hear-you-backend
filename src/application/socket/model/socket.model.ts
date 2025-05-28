@@ -13,4 +13,6 @@ export enum SocketEvents {
   SERVER_ANSWER = 'SERVE_ANSWER',
   SERVE_CANDIDATE = 'SERVE_CANDIDATE',
   START_GAME = 'START_GAME',
+
+  ERROR = 'ERROR',
 }

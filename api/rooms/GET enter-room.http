@@ -1,5 +1,5 @@
 @contentType = application/json
-@roomId = df4aba9f
+@roomId = 5eea1474
 @webRtcConnection = {"sdpOffer":{"type":"offer","sdp":"v=0\\r\\no=-%20639028740940401625%202%20IN%20IP4%20127.0.0.1\\r\\ns=-\\r\\nt=0%200\\r\\na=group:BUNDLE%200\\r\\na=extmap-allow-mixed\\r\\na=msid-semantic:%20WMS\\r\\nm=application%209%20UDP/DTLS/SCTP%20webrtc-datachannel\\r\\nc=IN%20IP4%200.0.0.0\\r\\na=ice-ufrag:Dz50\\r\\na=ice-pwd:WGtR2UqP98xgXzrQYjypE9aF\\r\\na=ice-options:trickle\\r\\na=fingerprint:sha-256%20F6:A0:97:0F:70:6F:C1:4B:FA:BC:AA:6D:F9:BE:7B:31:94:78:E3:48:58:A6:18:31:07:8B:6A:9F:5B:F1:67:9F\\r\\na=setup:actpass\\r\\na=mid:0\\r\\na=sctp-port:5000\\r\\na=max-message-size:262144\\r\\n"},"localCandidate":{"type":"candidate","candidate":{"candidate":"candidate:3216022832%201%20udp%202113937151%20192.0.0.2%2046249%20typ%20host%20generation%200%20ufrag%20Dz50%20network-cost%20999","sdpMid":"0","sdpMLineIndex":0,"usernameFragment":"Dz50"}},"publicCandidate":{"type":"candidate","candidate":{"candidate":"candidate:3822727451%201%20udp%202113939711%202001:2d8:f20e:22f8:1e1:41d0:dfaa:33ed%2056896%20typ%20host%20generation%200%20ufrag%20Dz50%20network-cost%20999","sdpMid":"0","sdpMLineIndex":0,"usernameFragment":"Dz50"}}}
 
 GET http://localhost:3000/v1/rooms/{{roomId}}
