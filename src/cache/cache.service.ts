@@ -51,12 +51,12 @@ class CacheService {
     }
   }
 
-  public deleteRoom = async (roomId: string): Promise<number | null> => {
+  public deleteRoom = async (roomKey: string): Promise<number | null> => {
     if (!this.redis) return null;
 
     const redisPing = await this.redis!.ping();
     if (redisPing === 'PONG') {
-      return this.redis!.del(roomId);
+      return this.redis!.del(roomKey);
     }
 
     return null;
@@ -71,43 +71,30 @@ class CacheService {
     }
   }
 
-  public addPlayerToRoom = async (roomId: string, playerSocketId: string): Promise<void> => {
+  public addPlayerToRoom = async (roomKey: string, playerSocketId: string): Promise<void> => {
     if (!this.redis) return;
 
     const redisPing = await this.redis!.ping();
     if (redisPing === 'PONG') {
-      await this.redis!.sadd(roomId, playerSocketId)
+      await this.redis!.sadd(roomKey, playerSocketId)
     }
   }
 
-  public removePlayerByRoom = async (roomId: string, playerSocketId: string): Promise<void> => {
+  public removePlayerByRoom = async (roomKey: string, playerSocketId: string): Promise<void> => {
     if (!this.redis) return;
 
     const redisPing = await this.redis!.ping();
     if (redisPing === 'PONG') {
-      await this.redis!.srem(roomId, playerSocketId)
+      await this.redis!.srem(roomKey, playerSocketId)
     }
   }
 
-  public countRoomPlayers = async (roomId: string): Promise<number | null> => {
-    if (!this.redis) return null;
-
-    const redisPing = await this.redis!.ping();
-    if (redisPing === 'PONG') {
-      // decrease max player cache key
-      const count = await this.redis!.scard(roomId);
-      return count - 1;
-    }
-
-    return null;
-  }
-
-  public getRoomPlayers = async (roomId: string): Promise<string[]> => {
+  public getRoomPlayers = async (roomKey: string): Promise<string[]> => {
     if (!this.redis) return [];
 
     const redisPing = await this.redis!.ping();
     if (redisPing === 'PONG') {
-      const result = await this.redis!.sscan(roomId, 0, 'MATCH', '*');
+      const result = await this.redis!.sscan(roomKey, 0, 'MATCH', '*');
 
       return result[1];
     }

@@ -27,15 +27,19 @@ class SocketGateway {
       console.log('[socket] disconnecting ', socket.id);
 
       const roomId = SocketRooms[socket.id];
-      // already disconnected player
+      // Already disconnected player
       if (!roomId) return
       delete SocketRooms[socket.id]
 
       const roomKey = await this.cacheService.getRoomKey(roomId);
-      // room not exists
+      // Room not exists
       if (!roomKey) return
 
       await this.cacheService.removePlayerByRoom(roomKey, socket.id);
+
+      // Broadcast for remain players
+      const players = await this.cacheService.getRoomPlayers(roomKey);
+      socketService.emitDataToRoom(roomId, SocketEvents.DISCONNECTING, { players });
     });
 
     // Disconnect
@@ -43,15 +47,19 @@ class SocketGateway {
       console.log('[socket] disconnect ', socket.id);
 
       const roomId = SocketRooms[socket.id];
-      // already disconnected player
+      // Already disconnected player
       if (!roomId) return
       delete SocketRooms[socket.id]
 
       const roomKey = await this.cacheService.getRoomKey(roomId);
-      // room not exists
+      // Room not exists
       if (!roomKey) return
 
       await this.cacheService.removePlayerByRoom(roomKey, socket.id);
+
+      // Broadcast for remain players
+      const players = await this.cacheService.getRoomPlayers(roomKey);
+      socketService.emitDataToRoom(roomId, SocketEvents.DISCONNECTING, { players });
     });
 
     // Create room
@@ -101,6 +109,13 @@ class SocketGateway {
         if (!roomKey) return
 
         await this.cacheService.removePlayerByRoom(roomKey, socket.id);
+
+        const players = await this.cacheService.getRoomPlayers(roomKey);
+
+        socketService.emitDataToRoom(roomId, SocketEvents.EXIT_ROOM, {
+          exitPlayer: socket.id,
+          players,
+        });
       } catch (err) {
         console.error(err);
         socketService.emitErrorToUser(socket.id, 'Something went wrong');
@@ -115,13 +130,18 @@ class SocketGateway {
         const roomKey = await this.cacheService.getRoomKey(roomId);
         if (!roomKey) throw new Error('RoomKey not found');
 
-        this.cacheService.addPlayerToRoom(roomKey, socket.id);
+        await this.cacheService.addPlayerToRoom(roomKey, socket.id);
 
         // socket join in room
         SocketRooms[socket.id] = roomId;
         socket.join(roomId);
 
-        socketService.emitDataToRoom(roomId, SocketEvents.ENTER_ROOM, socket.id);
+        const players = await this.cacheService.getRoomPlayers(roomKey);
+
+        socketService.emitDataToRoom(roomId, SocketEvents.ENTER_ROOM, {
+          enterPlayer: socket.id,
+          players,
+        });
       } catch (err) {
         console.error(err);
         socketService.emitErrorToUser(socket.id, 'Something went wrong');
@@ -188,6 +208,8 @@ class SocketGateway {
         players.forEach((player) => {
           delete SocketRooms[player];
         });
+
+        socketService.emitDataToRoom(roomId, SocketEvents.START_GAME, null);
       } catch (err) {
         console.error(err);
         socketService.emitErrorToUser(socket.id, 'Something went wrong');
