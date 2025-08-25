@@ -43,6 +43,7 @@ class SocketGateway {
         socketService.emitDataToRoom(roomId, SocketEvents.EXIT_ROOM, {
           exitPlayer: socket.id,
           players,
+          hostPlayer: roomKey.split('-')[2],
         });
       }
     });
@@ -68,6 +69,7 @@ class SocketGateway {
         socketService.emitDataToRoom(roomId, SocketEvents.EXIT_ROOM, {
           exitPlayer: socket.id,
           players,
+          hostPlayer: roomKey.split('-')[2],
         });
       }
     });
@@ -117,6 +119,14 @@ class SocketGateway {
         if (!roomKey) throw new Error('Room not exists');
 
         await this.cacheService.modifyRoomHost(roomKey, socket.id);
+
+        const players = await this.cacheService.getRoomPlayers(roomKey);
+
+        socketService.emitDataToRoom(roomId, SocketEvents.MODIFY_ROOM_HOST_PLAYER, {
+          exitPlayer: socket.id,
+          players,
+          hostPlayer: roomKey.split('-')[2],
+        });
       } catch (err) {
         console.error(err);
         socketService.emitErrorToUser(socket.id, 'Something went wrong');
@@ -143,6 +153,7 @@ class SocketGateway {
         socketService.emitDataToRoom(roomId, SocketEvents.EXIT_ROOM, {
           exitPlayer: socket.id,
           players,
+          hostPlayer: roomKey.split('-')[2],
         });
       } catch (err) {
         console.error(err);
@@ -169,6 +180,7 @@ class SocketGateway {
         socketService.emitDataToRoom(roomId, SocketEvents.ENTER_ROOM, {
           enterPlayer: socket.id,
           players,
+          hostPlayer: roomKey.split('-')[2],
         });
       } catch (err) {
         console.error(err);
@@ -199,6 +211,7 @@ class SocketGateway {
         socketService.emitDataToRoom(roomId, SocketEvents.KICK_PLAYER, {
           exitPlayer: kickedPlayerId,
           players,
+          hostPlayer: roomProperties[2],
         })
       } catch (err) {
         console.error(err);
