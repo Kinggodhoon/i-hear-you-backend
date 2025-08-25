@@ -39,7 +39,12 @@ class SocketGateway {
 
       // Broadcast for remain players
       const players = await this.cacheService.getRoomPlayers(roomKey);
-      socketService.emitDataToRoom(roomId, SocketEvents.DISCONNECTING, { players });
+      if (players.length > 0) {
+        socketService.emitDataToRoom(roomId, SocketEvents.EXIT_ROOM, {
+          exitPlayer: socket.id,
+          players,
+        });
+      }
     });
 
     // Disconnect
@@ -59,7 +64,12 @@ class SocketGateway {
 
       // Broadcast for remain players
       const players = await this.cacheService.getRoomPlayers(roomKey);
-      socketService.emitDataToRoom(roomId, SocketEvents.DISCONNECTING, { players });
+      if (players.length > 0) {
+        socketService.emitDataToRoom(roomId, SocketEvents.EXIT_ROOM, {
+          exitPlayer: socket.id,
+          players,
+        });
+      }
     });
 
     // Create room
