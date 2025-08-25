@@ -91,14 +91,28 @@ class SocketGateway {
       }
     });
 
-    // Modify room
-    socket.on(SocketEvents.MODIFY_ROOM, async ({ roomId, maxPlayer }: { roomId: string; maxPlayer: number }) => {
-      console.log('START MODIFY_ROOM')
+    // Modify room max player
+    socket.on(SocketEvents.MODIFY_ROOM_MAX_PLAYER, async ({ roomId, maxPlayer }: { roomId: string; maxPlayer: number }) => {
+      console.log('START MODIFY_ROOM_MAX_PLAYER')
       try {
         const roomKey = await this.cacheService.getRoomKey(roomId);
         if (!roomKey) throw new Error('Room not exists');
 
-        await this.cacheService.modifyRoomMaxPlayer(roomKey, roomId, +maxPlayer);
+        await this.cacheService.modifyRoomMaxPlayer(roomKey, +maxPlayer);
+      } catch (err) {
+        console.error(err);
+        socketService.emitErrorToUser(socket.id, 'Something went wrong');
+      }
+    });
+
+    // Modify room host player
+    socket.on(SocketEvents.MODIFY_ROOM_HOST_PLAYER, async ({ roomId, hostPlayerId }: { roomId: string; hostPlayerId: string }) => {
+      console.log('START MODIFY_ROOM_HOST_PLAYER')
+      try {
+        const roomKey = await this.cacheService.getRoomKey(roomId);
+        if (!roomKey) throw new Error('Room not exists');
+
+        await this.cacheService.modifyRoomHost(roomKey, hostPlayerId);
       } catch (err) {
         console.error(err);
         socketService.emitErrorToUser(socket.id, 'Something went wrong');
@@ -159,7 +173,7 @@ class SocketGateway {
     });
 
     // Peer kicked from room
-    socket.on(SocketEvents.KICK_PLAYER, async ({ roomId, kickedPlayerId }) => {
+    socket.on(SocketEvents.KICK_PLAYER, async ({ roomId, kickedPlayerId }: { roomId: string, kickedPlayerId: string}) => {
       console.log('START KICK_PLAYER')
       try {
         // player cache to room

@@ -42,12 +42,25 @@ class CacheService {
     return null;
   }
 
-  public modifyRoomMaxPlayer = async (roomKey: string, roomId: string, maxPlayer: number): Promise<void> => {
+  public modifyRoomMaxPlayer = async (roomKey: string, maxPlayer: number): Promise<void> => {
     if (!this.redis) return;
 
     const redisPing = await this.redis!.ping();
     if (redisPing === 'PONG') {
-      await this.redis!.rename(roomKey, `${roomId}-${maxPlayer}`);
+      const roomProperties = roomKey.split('-');
+
+      await this.redis!.rename(roomKey, `${roomProperties[0]}-${maxPlayer}-${roomProperties[2]}`);
+    }
+  }
+
+  public modifyRoomHost = async (roomKey: string, hostSocketId: string): Promise<void> => {
+    if (!this.redis) return;
+
+    const redisPing = await this.redis!.ping();
+    if (redisPing === 'PONG') {
+      const roomProperties = roomKey.split('-');
+
+      await this.redis!.rename(roomKey, `${roomProperties[0]}-${roomProperties[1]}-${hostSocketId}`);
     }
   }
 
@@ -67,7 +80,7 @@ class CacheService {
 
     const redisPing = await this.redis!.ping();
     if (redisPing === 'PONG') {
-      await this.redis!.sadd(`${roomId}-${maxLength}`, [hostSocketId]);
+      await this.redis!.sadd(`${roomId}-${maxLength}-${hostSocketId}`, [hostSocketId]);
     }
   }
 
