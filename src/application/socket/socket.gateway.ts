@@ -98,6 +98,10 @@ class SocketGateway {
         const roomKey = await this.cacheService.getRoomKey(roomId);
         if (!roomKey) throw new Error('Room not exists');
 
+        // check host player
+        const roomProperties = roomKey.split('-');
+        if (socket.id !== roomProperties[2]) throw new Error('Player not a host');
+
         await this.cacheService.modifyRoomMaxPlayer(roomKey, +maxPlayer);
       } catch (err) {
         console.error(err);
@@ -106,13 +110,13 @@ class SocketGateway {
     });
 
     // Modify room host player
-    socket.on(SocketEvents.MODIFY_ROOM_HOST_PLAYER, async ({ roomId, hostPlayerId }: { roomId: string; hostPlayerId: string }) => {
+    socket.on(SocketEvents.MODIFY_ROOM_HOST_PLAYER, async ({ roomId }) => {
       console.log('START MODIFY_ROOM_HOST_PLAYER')
       try {
         const roomKey = await this.cacheService.getRoomKey(roomId);
         if (!roomKey) throw new Error('Room not exists');
 
-        await this.cacheService.modifyRoomHost(roomKey, hostPlayerId);
+        await this.cacheService.modifyRoomHost(roomKey, socket.id);
       } catch (err) {
         console.error(err);
         socketService.emitErrorToUser(socket.id, 'Something went wrong');
@@ -179,6 +183,10 @@ class SocketGateway {
         // player cache to room
         const roomKey = await this.cacheService.getRoomKey(roomId);
         if (!roomKey) throw new Error('RoomKey not found');
+
+        // check host player
+        const roomProperties = roomKey.split('-');
+        if (socket.id !== roomProperties[2]) throw new Error('Player not a host');
 
         // send kicked message to kicked player
         socketService.emitDataToUser(kickedPlayerId, SocketEvents.KICKED_FROM_ROOM, kickedMessage);
@@ -251,6 +259,10 @@ class SocketGateway {
       try {
         const roomKey = await this.cacheService.getRoomKey(roomId);
         if (!roomKey) throw new Error('RoomKey not found');
+
+        // check host player
+        const roomProperties = roomKey.split('-');
+        if (socket.id !== roomProperties[2]) throw new Error('Player not a host');
 
         const players = await this.cacheService.getRoomPlayers(roomKey);
         await this.cacheService.deleteRoom(roomKey);
