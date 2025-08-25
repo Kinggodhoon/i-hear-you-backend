@@ -1,6 +1,6 @@
 // socket.gateway.ts
 import { Socket } from 'socket.io';
-import { SocketEvents, SocketRooms } from './model/socket.model';
+import { kickedMessage, SocketEvents, SocketRooms } from './model/socket.model';
 import { socketService } from './socket.service';
 import CacheService from '../../cache/cache.service';
 import RoomsService from '../rooms/rooms.service';
@@ -152,6 +152,32 @@ class SocketGateway {
           enterPlayer: socket.id,
           players,
         });
+      } catch (err) {
+        console.error(err);
+        socketService.emitErrorToUser(socket.id, 'Something went wrong');
+      }
+    });
+
+    // Peer kicked from room
+    socket.on(SocketEvents.KICK_PLAYER, async ({ roomId, kickedPlayerId }) => {
+      console.log('START KICK_PLAYER')
+      try {
+        // player cache to room
+        const roomKey = await this.cacheService.getRoomKey(roomId);
+        if (!roomKey) throw new Error('RoomKey not found');
+
+        // send kicked message to kicked player
+        socketService.emitDataToUser(kickedPlayerId, SocketEvents.KICKED_FROM_ROOM, kickedMessage);
+
+        // remove player from room
+        await this.cacheService.removePlayerByRoom(roomKey, kickedPlayerId);
+
+        // emit kicked player to room
+        const players = await this.cacheService.getRoomPlayers(roomKey);
+        socketService.emitDataToRoom(roomId, SocketEvents.KICK_PLAYER, {
+          exitPlayer: kickedPlayerId,
+          players,
+        })
       } catch (err) {
         console.error(err);
         socketService.emitErrorToUser(socket.id, 'Something went wrong');
