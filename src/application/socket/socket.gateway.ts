@@ -4,6 +4,7 @@ import { kickedMessage, SocketEvents, SocketRooms } from './model/socket.model';
 import { socketService } from './socket.service';
 import CacheService from '../../cache/cache.service';
 import RoomsService from '../rooms/rooms.service';
+import { RoomSetting } from '../rooms/model/rooms.model';
 
 class SocketGateway {
   private cacheService: CacheService;
@@ -43,7 +44,7 @@ class SocketGateway {
         socketService.emitDataToRoom(roomId, SocketEvents.EXIT_ROOM, {
           exitPlayer: socket.id,
           players,
-          hostPlayer: roomKey.split('-')[2],
+          hostPlayer: roomKey.split('|')[2],
         });
       }
     });
@@ -69,7 +70,7 @@ class SocketGateway {
         socketService.emitDataToRoom(roomId, SocketEvents.EXIT_ROOM, {
           exitPlayer: socket.id,
           players,
-          hostPlayer: roomKey.split('-')[2],
+          hostPlayer: roomKey.split('|')[2],
         });
       }
     });
@@ -101,8 +102,12 @@ class SocketGateway {
         if (!roomKey) throw new Error('Room not exists');
 
         // check host player
-        const roomProperties = roomKey.split('-');
+        const roomProperties = roomKey.split('|');
         if (socket.id !== roomProperties[2]) throw new Error('Player not a host');
+
+        // check current player count
+        const roomPlayers = await this.cacheService.getRoomPlayers(roomKey);
+        if (roomPlayers.length > maxPlayer) throw new Error('Invalid max player');
 
         await this.cacheService.modifyRoomMaxPlayer(roomKey, +maxPlayer);
       } catch (err) {
@@ -125,7 +130,7 @@ class SocketGateway {
         socketService.emitDataToRoom(roomId, SocketEvents.MODIFY_ROOM_HOST_PLAYER, {
           exitPlayer: socket.id,
           players,
-          hostPlayer: roomKey.split('-')[2],
+          hostPlayer: roomKey.split('|')[2],
         });
       } catch (err) {
         console.error(err);
@@ -153,7 +158,7 @@ class SocketGateway {
         socketService.emitDataToRoom(roomId, SocketEvents.EXIT_ROOM, {
           exitPlayer: socket.id,
           players,
-          hostPlayer: roomKey.split('-')[2],
+          hostPlayer: roomKey.split('|')[2],
         });
       } catch (err) {
         console.error(err);
@@ -169,18 +174,21 @@ class SocketGateway {
         const roomKey = await this.cacheService.getRoomKey(roomId);
         if (!roomKey) throw new Error('RoomKey not found');
 
+        // check max player
+        const roomProperties = roomKey.split('|');
+        const players = await this.cacheService.getRoomPlayers(roomKey);
+        if (players.length >= +roomProperties[1]) throw new Error('Room is full');
+
         await this.cacheService.addPlayerToRoom(roomKey, socket.id);
 
         // socket join in room
         SocketRooms[socket.id] = roomId;
         socket.join(roomId);
 
-        const players = await this.cacheService.getRoomPlayers(roomKey);
-
         socketService.emitDataToRoom(roomId, SocketEvents.ENTER_ROOM, {
           enterPlayer: socket.id,
           players,
-          hostPlayer: roomKey.split('-')[2],
+          hostPlayer: roomProperties[2],
         });
       } catch (err) {
         console.error(err);
@@ -197,7 +205,7 @@ class SocketGateway {
         if (!roomKey) throw new Error('RoomKey not found');
 
         // check host player
-        const roomProperties = roomKey.split('-');
+        const roomProperties = roomKey.split('|');
         if (socket.id !== roomProperties[2]) throw new Error('Player not a host');
 
         // send kicked message to kicked player
@@ -267,14 +275,14 @@ class SocketGateway {
       }
     });
 
-    socket.on(SocketEvents.START_GAME, async ({ roomId }) => {
+    socket.on(SocketEvents.START_GAME, async ({ roomId, roomSettings }: { roomId: string, roomSettings: RoomSetting}) => {
       console.log('START START_GAME')
       try {
         const roomKey = await this.cacheService.getRoomKey(roomId);
         if (!roomKey) throw new Error('RoomKey not found');
 
         // check host player
-        const roomProperties = roomKey.split('-');
+        const roomProperties = roomKey.split('|');
         if (socket.id !== roomProperties[2]) throw new Error('Player not a host');
 
         const players = await this.cacheService.getRoomPlayers(roomKey);
@@ -284,7 +292,9 @@ class SocketGateway {
           delete SocketRooms[player];
         });
 
-        socketService.emitDataToRoom(roomId, SocketEvents.START_GAME, null);
+        socketService.emitDataToRoom(roomId, SocketEvents.START_GAME, {
+          roomSettings,
+        });
       } catch (err) {
         console.error(err);
         socketService.emitErrorToUser(socket.id, 'Something went wrong');

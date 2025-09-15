@@ -53,7 +53,7 @@ class RoomsController extends Controller {
 
       const roomKey = await this.cacheService.getRoomKey(params.roomId);
       if (!roomKey) throw new HttpException(404, 'Not Found');
-      const maxPlayer = +roomKey.split('-')[1];
+      const maxPlayer = +roomKey.split('|')[1];
 
       const players = await this.cacheService.getRoomPlayers(roomKey);
       if (players.length >= maxPlayer) {

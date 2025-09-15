@@ -47,9 +47,9 @@ class CacheService {
 
     const redisPing = await this.redis!.ping();
     if (redisPing === 'PONG') {
-      const roomProperties = roomKey.split('-');
+      const roomProperties = roomKey.split('|');
 
-      await this.redis!.rename(roomKey, `${roomProperties[0]}-${maxPlayer}-${roomProperties[2]}`);
+      await this.redis!.rename(roomKey, `${roomProperties[0]}|${maxPlayer}|${roomProperties[2]}`);
     }
   }
 
@@ -58,9 +58,9 @@ class CacheService {
 
     const redisPing = await this.redis!.ping();
     if (redisPing === 'PONG') {
-      const roomProperties = roomKey.split('-');
+      const roomProperties = roomKey.split('|');
 
-      await this.redis!.rename(roomKey, `${roomProperties[0]}-${roomProperties[1]}-${hostSocketId}`);
+      await this.redis!.rename(roomKey, `${roomProperties[0]}|${roomProperties[1]}|${hostSocketId}`);
     }
   }
 
@@ -80,7 +80,7 @@ class CacheService {
 
     const redisPing = await this.redis!.ping();
     if (redisPing === 'PONG') {
-      await this.redis!.sadd(`${roomId}-${maxLength}-${hostSocketId}`, [hostSocketId]);
+      await this.redis!.sadd(`${roomId}|${maxLength}|${hostSocketId}`, [hostSocketId]);
     }
   }
 

@@ -75,31 +75,9 @@ export class EnterRoomResponse {
   players: string[];
 }
 
-// export class EnterRoomRequest {
-//   @IsString()
-//   @IsDefined()
-//   public roomId: string;
-
-//   @IsDefined()
-//   @JsonParse(WebRtcConnection)
-//   @ValidateNested({ each: true })
-//   @Type(() => WebRtcConnection)
-//   webRtcConnection: WebRtcConnection;
-// }
-
-// export class EnterRoomResponse {
-//   @ResponseProperty({ type: 'object', isRequired: true, description: 'Host Rtc Connection' })
-//   webRtcConnection: WebRtcConnection;
-// }
-
-// export class CreateRoomRequest {
-//   @IsDefined()
-//   @ValidateNested({ each: true })
-//   @Type(() => WebRtcConnection)
-//   webRtcConnection: WebRtcConnection;
-// }
-
-// export class CreateRoomResponse {
-//   @ResponseProperty({ type: 'string', isRequired: true, description: 'Room id' })
-//   roomId: string;
-// }
+export interface RoomSetting {
+  maxPlayers: number;
+  questionCount: number;
+  questionTime: number;
+  showHint: boolean;
+}
