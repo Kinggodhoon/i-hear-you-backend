@@ -311,4 +311,7 @@ src/config/**
 # SWAGGER
 docs/swagger-spec.json
 
+# DEPLOY
+fly.toml
+
 # End of https://www.toptal.com/developers/gitignore/api/macos,visualstudiocode,webstorm

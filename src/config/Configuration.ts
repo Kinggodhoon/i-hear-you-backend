@@ -1,5 +1,6 @@
 export enum SupportedEnvironment {
   development = 'dev',
+  production = 'production',
 }
 
 export interface Configuration {
