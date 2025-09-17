@@ -7,7 +7,6 @@ export default class Config {
 
   public static getConfig(): Configuration {
     if (!this.config) {
-      console.log(process.env.NODE_ENV)
       switch (process.env.NODE_ENV) {
         case SupportedEnvironment.production:
           this.config = Production;

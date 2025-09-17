@@ -12,10 +12,6 @@ export function initSocket(server: http.Server) {
   });
 
   io.on('connection', (socket: Socket) => {
-    console.log('[socket] connected:', socket.id);
-
-    socket.join('abc');
-
     socketGateway.handleConnection(socket);
   });
 }

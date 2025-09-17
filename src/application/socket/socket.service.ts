@@ -1,4 +1,6 @@
 import { getIO } from '../../../socket-app';
+import Config from '../../config/Config';
+import { SocketException } from '../../types/exception';
 import { SocketEvents } from './model/socket.model';
 
 class SocketService {
@@ -14,10 +16,16 @@ class SocketService {
     io.to(socketId).emit(event, data);
   }
 
-  public emitErrorToUser(socketId: string, message: string) {
+  public emitErrorToUser(socketId: string, error: SocketException) {
     const io = getIO();
 
-    io.to(socketId).emit(SocketEvents.ERROR, message);
+    // hidden message for production
+    const message = Config.isProduction() ? 'Something went wrong' : error.message
+
+    io.to(socketId).emit(SocketEvents.ERROR, {
+      code: error.code || 500,
+      message,
+    });
   }
 }
 

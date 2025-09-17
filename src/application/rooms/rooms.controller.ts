@@ -12,6 +12,7 @@ import { ApiContoller } from '../../decorator/swagger/api-controller';
 import { HttpException } from '../../types/exception';
 
 import { EnterRoomRequest, EnterRoomResponse } from './model/rooms.model';
+import { loggingError } from '../logger/logger';
 
 @ApiContoller('temp')
 class RoomsController extends Controller {
@@ -68,7 +69,7 @@ class RoomsController extends Controller {
         },
       }
     } catch (error) {
-      console.log(error);
+      loggingError('getRoomId', error as HttpException);
       res.responseError = error;
     }
     return next();

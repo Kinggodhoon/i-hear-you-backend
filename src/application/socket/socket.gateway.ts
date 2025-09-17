@@ -5,6 +5,8 @@ import { socketService } from './socket.service';
 import CacheService from '../../cache/cache.service';
 import RoomsService from '../rooms/rooms.service';
 import { RoomSetting } from '../rooms/model/rooms.model';
+import { SocketException } from '../../types/exception';
+import { loggingError } from '../logger/logger';
 
 class SocketGateway {
   private cacheService: CacheService;
@@ -25,8 +27,6 @@ class SocketGateway {
 
     // Disconnecting
     socket.on(SocketEvents.DISCONNECTING, async () => {
-      console.log('[socket] disconnecting ', socket.id);
-
       const roomId = SocketRooms[socket.id];
       // Already disconnected player
       if (!roomId) return
@@ -51,8 +51,6 @@ class SocketGateway {
 
     // Disconnect
     socket.on(SocketEvents.DISCONNECT, async () => {
-      console.log('[socket] disconnect ', socket.id);
-
       const roomId = SocketRooms[socket.id];
       // Already disconnected player
       if (!roomId) return
@@ -79,7 +77,6 @@ class SocketGateway {
     socket.on(SocketEvents.CREATE_ROOM, async () => {
       try {
         const roomId = await this.roomsService.generateRoomId();
-        console.log('START CREATE ROOM', roomId)
 
         // create room and join room
         await this.cacheService.createRoom(roomId, 8, socket.id);
@@ -89,39 +86,37 @@ class SocketGateway {
 
         socketService.emitDataToUser(socket.id, 'CREATE_ROOM', roomId);
       } catch (err) {
-        console.error(err);
-        socketService.emitErrorToUser(socket.id, 'Something went wrong');
+        loggingError('CREATE_ROOM', err as SocketException);
+        socketService.emitErrorToUser(socket.id, err as SocketException);
       }
     });
 
     // Modify room max player
     socket.on(SocketEvents.MODIFY_ROOM_MAX_PLAYER, async ({ roomId, maxPlayer }: { roomId: string; maxPlayer: number }) => {
-      console.log('START MODIFY_ROOM_MAX_PLAYER')
       try {
         const roomKey = await this.cacheService.getRoomKey(roomId);
-        if (!roomKey) throw new Error('Room not exists');
+        if (!roomKey) throw new SocketException(404, 'Room not exists');
 
         // check host player
         const roomProperties = roomKey.split('|');
-        if (socket.id !== roomProperties[2]) throw new Error('Player not a host');
+        if (socket.id !== roomProperties[2]) throw new SocketException(403, 'Player not a host');
 
         // check current player count
         const roomPlayers = await this.cacheService.getRoomPlayers(roomKey);
-        if (roomPlayers.length > maxPlayer) throw new Error('Invalid max player');
+        if (roomPlayers.length > maxPlayer) throw new SocketException(400, 'Invalid max player');
 
         await this.cacheService.modifyRoomMaxPlayer(roomKey, +maxPlayer);
       } catch (err) {
-        console.error(err);
-        socketService.emitErrorToUser(socket.id, 'Something went wrong');
+        loggingError('MODIFY_ROOM_MAX_PLAYER', err as SocketException);
+        socketService.emitErrorToUser(socket.id, err as SocketException);
       }
     });
 
     // Modify room host player
     socket.on(SocketEvents.MODIFY_ROOM_HOST_PLAYER, async ({ roomId }) => {
-      console.log('START MODIFY_ROOM_HOST_PLAYER')
       try {
         const roomKey = await this.cacheService.getRoomKey(roomId);
-        if (!roomKey) throw new Error('Room not exists');
+        if (!roomKey) throw new SocketException(404, 'Room not exists');
 
         await this.cacheService.modifyRoomHost(roomKey, socket.id);
 
@@ -133,14 +128,13 @@ class SocketGateway {
           hostPlayer: roomKey.split('|')[2],
         });
       } catch (err) {
-        console.error(err);
-        socketService.emitErrorToUser(socket.id, 'Something went wrong');
+        loggingError('MODIFY_ROOM_HOST_PLAYER', err as SocketException);
+        socketService.emitErrorToUser(socket.id, err as SocketException);
       }
     });
 
     // Exit room
     socket.on(SocketEvents.EXIT_ROOM, async () => {
-      console.log('START EXIT_ROOM')
       try {
         const roomId = SocketRooms[socket.id];
         // already disconnected player
@@ -161,23 +155,22 @@ class SocketGateway {
           hostPlayer: roomKey.split('|')[2],
         });
       } catch (err) {
-        console.error(err);
-        socketService.emitErrorToUser(socket.id, 'Something went wrong');
+        loggingError('EXIT_ROOM', err as SocketException);
+        socketService.emitErrorToUser(socket.id, err as SocketException);
       }
     });
 
     // Peer entering to room
     socket.on(SocketEvents.ENTER_ROOM, async ({ roomId }) => {
-      console.log('START ENTER_ROOM')
       try {
         // player cache to room
         const roomKey = await this.cacheService.getRoomKey(roomId);
-        if (!roomKey) throw new Error('RoomKey not found');
+        if (!roomKey) throw new SocketException(404, 'RoomKey not found');
 
         // check max player
         const roomProperties = roomKey.split('|');
         const players = await this.cacheService.getRoomPlayers(roomKey);
-        if (players.length >= +roomProperties[1]) throw new Error('Room is full');
+        if (players.length >= +roomProperties[1]) throw new SocketException(409, 'Room is full');
 
         await this.cacheService.addPlayerToRoom(roomKey, socket.id);
 
@@ -191,22 +184,21 @@ class SocketGateway {
           hostPlayer: roomProperties[2],
         });
       } catch (err) {
-        console.error(err);
-        socketService.emitErrorToUser(socket.id, 'Something went wrong');
+        loggingError('ENTER_ROOM', err as SocketException);
+        socketService.emitErrorToUser(socket.id, err as SocketException);
       }
     });
 
     // Peer kicked from room
     socket.on(SocketEvents.KICK_PLAYER, async ({ roomId, kickedPlayerId }: { roomId: string, kickedPlayerId: string}) => {
-      console.log('START KICK_PLAYER')
       try {
         // player cache to room
         const roomKey = await this.cacheService.getRoomKey(roomId);
-        if (!roomKey) throw new Error('RoomKey not found');
+        if (!roomKey) throw new SocketException(404, 'RoomKey not found');
 
         // check host player
         const roomProperties = roomKey.split('|');
-        if (socket.id !== roomProperties[2]) throw new Error('Player not a host');
+        if (socket.id !== roomProperties[2]) throw new SocketException(403, 'Player not a host');
 
         // send kicked message to kicked player
         socketService.emitDataToUser(kickedPlayerId, SocketEvents.KICKED_FROM_ROOM, kickedMessage);
@@ -222,68 +214,64 @@ class SocketGateway {
           hostPlayer: roomProperties[2],
         })
       } catch (err) {
-        console.error(err);
-        socketService.emitErrorToUser(socket.id, 'Something went wrong');
+        loggingError('KICK_PLAYER', err as SocketException);
+        socketService.emitErrorToUser(socket.id, err as SocketException);
       }
     });
 
     // Serve Offer to client
     socket.on(SocketEvents.SERVE_OFFER, ({ socketId, message }) => {
-      console.log('START SERVE_OFFER')
       try {
-        if (!SocketRooms[socketId]) throw new Error('Player not found');
+        if (!SocketRooms[socketId]) throw new SocketException(404, 'Player not found');
 
         socketService.emitDataToUser(socketId, SocketEvents.SERVE_OFFER, {
           senderId: socket.id,
           ...message,
         });
       } catch (err) {
-        console.error(err);
-        socketService.emitErrorToUser(socket.id, 'Something went wrong');
+        loggingError('SERVE_OFFER', err as SocketException);
+        socketService.emitErrorToUser(socket.id, err as SocketException);
       }
     });
 
     // Serve Answer to client
     socket.on(SocketEvents.SERVER_ANSWER, ({ socketId, message }) => {
-      console.log('START SERVER_ANSWER')
       try {
-        if (!SocketRooms[socketId]) throw new Error('Player not found');
+        if (!SocketRooms[socketId]) throw new SocketException(404, 'Player not found');
 
         socketService.emitDataToUser(socketId, SocketEvents.SERVER_ANSWER, {
           senderId: socket.id,
           ...message,
         });
       } catch (err) {
-        console.error(err);
-        socketService.emitErrorToUser(socket.id, 'Something went wrong');
+        loggingError('SERVER_ANSWER', err as SocketException);
+        socketService.emitErrorToUser(socket.id, err as SocketException);
       }
     });
 
     // Serve Candidate to client
     socket.on(SocketEvents.SERVE_CANDIDATE, ({ socketId, message }) => {
-      console.log('START SERVE_CANDIDATE')
       try {
-        if (!SocketRooms[socketId]) throw new Error('Player not found');
+        if (!SocketRooms[socketId]) throw new SocketException(404, 'Player not found');
 
         socketService.emitDataToUser(socketId, SocketEvents.SERVE_CANDIDATE, {
           senderId: socket.id,
           ...message,
         });
       } catch (err) {
-        console.error(err);
-        socketService.emitErrorToUser(socket.id, 'Something went wrong');
+        loggingError('SERVE_CANDIDATE', err as SocketException);
+        socketService.emitErrorToUser(socket.id, err as SocketException);
       }
     });
 
     socket.on(SocketEvents.START_GAME, async ({ roomId, roomSettings }: { roomId: string, roomSettings: RoomSetting}) => {
-      console.log('START START_GAME')
       try {
         const roomKey = await this.cacheService.getRoomKey(roomId);
-        if (!roomKey) throw new Error('RoomKey not found');
+        if (!roomKey) throw new SocketException(404, 'RoomKey not found');
 
         // check host player
         const roomProperties = roomKey.split('|');
-        if (socket.id !== roomProperties[2]) throw new Error('Player not a host');
+        if (socket.id !== roomProperties[2]) throw new SocketException(403, 'Player not a host');
 
         const players = await this.cacheService.getRoomPlayers(roomKey);
         await this.cacheService.deleteRoom(roomKey);
@@ -296,8 +284,8 @@ class SocketGateway {
           roomSettings,
         });
       } catch (err) {
-        console.error(err);
-        socketService.emitErrorToUser(socket.id, 'Something went wrong');
+        loggingError('START_GAME', err as SocketException);
+        socketService.emitErrorToUser(socket.id, err as SocketException);
       }
     })
   }
