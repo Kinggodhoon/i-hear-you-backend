@@ -173,6 +173,7 @@ class SocketGateway {
         if (players.length >= +roomProperties[1]) throw new SocketException(409, 'Room is full');
 
         await this.cacheService.addPlayerToRoom(roomKey, socket.id);
+        players.push(socket.id);
 
         // socket join in room
         SocketRooms[socket.id] = roomId;
