@@ -106,6 +106,10 @@ class SocketGateway {
         if (roomPlayers.length > maxPlayer) throw new SocketException(400, 'Invalid max player');
 
         await this.cacheService.modifyRoomMaxPlayer(roomKey, +maxPlayer);
+
+        socketService.emitDataToRoom(roomId, SocketEvents.MODIFY_ROOM_MAX_PLAYER, {
+          maxPlayer,
+        });
       } catch (err) {
         loggingError('MODIFY_ROOM_MAX_PLAYER', err as SocketException);
         socketService.emitErrorToUser(socket.id, err as SocketException);
