@@ -14,7 +14,7 @@ import { HttpException } from '../../types/exception';
 import { EnterRoomRequest, EnterRoomResponse } from './model/rooms.model';
 import { loggingError } from '../logger/logger';
 
-@ApiContoller('temp')
+@ApiContoller('Rooms')
 class RoomsController extends Controller {
   public readonly path = '/rooms';
 

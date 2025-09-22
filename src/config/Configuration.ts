@@ -12,4 +12,10 @@ export interface Configuration {
     port: number;
     password: string;
   }
+
+  readonly METERED_INFO: {
+    baseUrl: string;
+    secretKey: string;
+    expiryInSeconds: number;
+  }
 }

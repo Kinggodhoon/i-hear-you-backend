@@ -1,6 +1,7 @@
 import Redis from 'ioredis';
 
 import Config from '../config/Config';
+import { MeteredCredential, TurnIceServer } from '../application/turn/model/turn.model';
 
 class CacheService {
   private static singleton: CacheService;
@@ -25,6 +26,28 @@ class CacheService {
     }
 
     return this.singleton;
+  }
+
+  public createTurnIces = async (turnIceServers: Array<TurnIceServer>): Promise<void> => {
+    if (!this.redis) return;
+
+    const redisPing = await this.redis!.ping();
+    if (redisPing === 'PONG') {
+      await this.redis!.set('turn_ice_servers', JSON.stringify(turnIceServers), 'EX', Config.getConfig().METERED_INFO.expiryInSeconds - 60);
+    }
+  }
+
+  public getTurnIces = async (): Promise<string | null> => {
+    if (!this.redis) return null;
+
+    const redisPing = await this.redis!.ping();
+    if (redisPing === 'PONG') {
+      const plainTurnIceServers = await this.redis!.get('turn_ice_servers');
+
+      return plainTurnIceServers;
+    }
+
+    return null;
   }
 
   public getRoomKey = async (roomId: string): Promise<string | null> => {
