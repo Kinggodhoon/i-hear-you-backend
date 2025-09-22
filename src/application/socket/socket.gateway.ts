@@ -92,7 +92,7 @@ class SocketGateway {
     });
 
     // Modify room max player
-    socket.on(SocketEvents.MODIFY_ROOM_MAX_PLAYER, async ({ roomId, maxPlayer }: { roomId: string; maxPlayer: number }) => {
+    socket.on(SocketEvents.MODIFY_ROOM_MAX_PLAYER, async ({ roomId, maxPlayers }: { roomId: string; maxPlayers: number }) => {
       try {
         const roomKey = await this.cacheService.getRoomKey(roomId);
         if (!roomKey) throw new SocketException(404, 'Room not exists');
@@ -103,12 +103,12 @@ class SocketGateway {
 
         // check current player count
         const roomPlayers = await this.cacheService.getRoomPlayers(roomKey);
-        if (roomPlayers.length > maxPlayer) throw new SocketException(400, 'Invalid max player');
+        if (roomPlayers.length > maxPlayers) throw new SocketException(400, 'Invalid max player');
 
-        await this.cacheService.modifyRoomMaxPlayer(roomKey, +maxPlayer);
+        await this.cacheService.modifyRoomMaxPlayer(roomKey, +maxPlayers);
 
         socketService.emitDataToRoom(roomId, SocketEvents.MODIFY_ROOM_MAX_PLAYER, {
-          maxPlayer,
+          maxPlayers,
         });
       } catch (err) {
         loggingError('MODIFY_ROOM_MAX_PLAYER', err as SocketException);
