@@ -92,6 +92,7 @@ class SocketGateway {
     });
 
     // Modify room max player
+    // TODO: Lagacy remove
     socket.on(SocketEvents.MODIFY_ROOM_MAX_PLAYER, async ({ roomId, maxPlayers }: { roomId: string; maxPlayers: number }) => {
       try {
         const roomKey = await this.cacheService.getRoomKey(roomId);
@@ -109,6 +110,33 @@ class SocketGateway {
 
         socketService.emitDataToRoom(roomId, SocketEvents.MODIFY_ROOM_MAX_PLAYER, {
           maxPlayers,
+        });
+      } catch (err) {
+        loggingError('MODIFY_ROOM_MAX_PLAYER', err as SocketException);
+        socketService.emitErrorToUser(socket.id, err as SocketException);
+      }
+    });
+
+    socket.on(SocketEvents.MODIFY_ROOM_SETTINGS, async ({ roomId, roomSettings }: { roomId: string; roomSettings: RoomSetting }) => {
+      try {
+        const roomKey = await this.cacheService.getRoomKey(roomId);
+        if (!roomKey) throw new SocketException(404, 'Room not exists');
+
+        // check host player
+        const roomProperties = roomKey.split('|');
+        if (socket.id !== roomProperties[2]) throw new SocketException(403, 'Player not a host');
+
+        // check is modify maxPlayers setting
+        if (+roomProperties[1] !== roomSettings.maxPlayers) {
+          // check current player count
+          const roomPlayers = await this.cacheService.getRoomPlayers(roomKey);
+          if (roomPlayers.length > roomSettings.maxPlayers) throw new SocketException(400, 'Invalid max player');
+
+          await this.cacheService.modifyRoomMaxPlayer(roomKey, roomSettings.maxPlayers);
+        }
+
+        socketService.emitDataToRoom(roomId, SocketEvents.MODIFY_ROOM_SETTINGS, {
+          roomSettings,
         });
       } catch (err) {
         loggingError('MODIFY_ROOM_MAX_PLAYER', err as SocketException);
