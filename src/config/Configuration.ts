@@ -6,6 +6,7 @@ export enum SupportedEnvironment {
 export interface Configuration {
   readonly ENV: string;
   readonly PORT: number;
+  readonly cors: string | string[];
 
   readonly REDIS_INFO: {
     host: string;

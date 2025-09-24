@@ -26,7 +26,7 @@ class ExpressApp {
   }
 
   private initializeMiddlewares() {
-    this.app.use(cors({ origin: '*' }));
+    this.app.use(cors({ origin: Config.getConfig().cors }));
     this.app.use(express.json());
     this.app.use(express.urlencoded({ extended: true }));
   }

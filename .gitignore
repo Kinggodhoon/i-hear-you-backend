@@ -313,5 +313,6 @@ docs/swagger-spec.json
 
 # DEPLOY
 fly.toml
+deploy.sh
 
 # End of https://www.toptal.com/developers/gitignore/api/macos,visualstudiocode,webstorm
