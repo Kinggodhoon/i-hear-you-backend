@@ -103,7 +103,11 @@ class CacheService {
 
     const redisPing = await this.redis!.ping();
     if (redisPing === 'PONG') {
-      await this.redis!.sadd(`${roomId}|${maxLength}|${hostSocketId}`, [hostSocketId]);
+      const redisPipeline = this.redis!.pipeline();
+      redisPipeline.sadd(`${roomId}|${maxLength}|${hostSocketId}`, [hostSocketId]);
+      redisPipeline.expire(`${roomId}|${maxLength}|${hostSocketId}`, 3600);
+
+      await redisPipeline.exec();
     }
   }
 

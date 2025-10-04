@@ -33,6 +33,7 @@ COPY --from=build /app /app
 
 # Set production environment
 ENV NODE_ENV="production"
+ENV PORT=8080
 
 # Start the server by default, this can be overwritten at runtime
 EXPOSE 8080
