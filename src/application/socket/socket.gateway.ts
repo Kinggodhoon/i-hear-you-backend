@@ -1,6 +1,6 @@
 // socket.gateway.ts
 import { Socket } from 'socket.io';
-import { kickedMessage, SocketEvents, SocketRooms } from './model/socket.model';
+import { kickedMessage, SocketEvents } from './model/socket.model';
 import { socketService } from './socket.service';
 import CacheService from '../../cache/cache.service';
 import RoomsService from '../rooms/rooms.service';
@@ -27,10 +27,10 @@ class SocketGateway {
 
     // Disconnecting
     socket.on(SocketEvents.DISCONNECTING, async () => {
-      const roomId = SocketRooms[socket.id];
+      const roomId = socketService.getClientRoom(socket.id);
+
       // Already disconnected player
       if (!roomId) return
-      delete SocketRooms[socket.id]
 
       const roomKey = await this.cacheService.getRoomKey(roomId);
       // Room not exists
@@ -51,10 +51,10 @@ class SocketGateway {
 
     // Disconnect
     socket.on(SocketEvents.DISCONNECT, async () => {
-      const roomId = SocketRooms[socket.id];
+      const roomId = socketService.getClientRoom(socket.id);
+
       // Already disconnected player
       if (!roomId) return
-      delete SocketRooms[socket.id]
 
       const roomKey = await this.cacheService.getRoomKey(roomId);
       // Room not exists
@@ -80,9 +80,7 @@ class SocketGateway {
 
         // create room and join room
         await this.cacheService.createRoom(roomId, 8, socket.id);
-        socket.join(roomId);
-
-        SocketRooms[socket.id] = roomId;
+        await socket.join(roomId);
 
         socketService.emitDataToUser(socket.id, 'CREATE_ROOM', roomId);
       } catch (err) {
@@ -168,10 +166,10 @@ class SocketGateway {
     // Exit room
     socket.on(SocketEvents.EXIT_ROOM, async () => {
       try {
-        const roomId = SocketRooms[socket.id];
+        const roomId = socketService.getClientRoom(socket.id);
+
         // already disconnected player
         if (!roomId) return
-        delete SocketRooms[socket.id]
 
         const roomKey = await this.cacheService.getRoomKey(roomId);
         // room not exists
@@ -208,8 +206,7 @@ class SocketGateway {
         players.push(socket.id);
 
         // socket join in room
-        SocketRooms[socket.id] = roomId;
-        socket.join(roomId);
+        await socket.join(roomId);
 
         socketService.emitDataToRoom(roomId, SocketEvents.ENTER_ROOM, {
           enterPlayer: socket.id,
@@ -255,7 +252,8 @@ class SocketGateway {
     // Serve Offer to client
     socket.on(SocketEvents.SERVE_OFFER, ({ socketId, message }) => {
       try {
-        if (!SocketRooms[socketId]) throw new SocketException(404, 'Player not found');
+        const isExistsSocket = socketService.checkSocketExists(socketId);
+        if (!isExistsSocket) throw new SocketException(404, 'Player not found');
 
         socketService.emitDataToUser(socketId, SocketEvents.SERVE_OFFER, {
           senderId: socket.id,
@@ -270,7 +268,8 @@ class SocketGateway {
     // Serve Answer to client
     socket.on(SocketEvents.SERVER_ANSWER, ({ socketId, message }) => {
       try {
-        if (!SocketRooms[socketId]) throw new SocketException(404, 'Player not found');
+        const isExistsSocket = socketService.checkSocketExists(socketId);
+        if (!isExistsSocket) throw new SocketException(404, 'Player not found');
 
         socketService.emitDataToUser(socketId, SocketEvents.SERVER_ANSWER, {
           senderId: socket.id,
@@ -285,7 +284,8 @@ class SocketGateway {
     // Serve Candidate to client
     socket.on(SocketEvents.SERVE_CANDIDATE, ({ socketId, message }) => {
       try {
-        if (!SocketRooms[socketId]) throw new SocketException(404, 'Player not found');
+        const isExistsSocket = socketService.checkSocketExists(socketId);
+        if (!isExistsSocket) throw new SocketException(404, 'Player not found');
 
         socketService.emitDataToUser(socketId, SocketEvents.SERVE_CANDIDATE, {
           senderId: socket.id,
@@ -306,12 +306,7 @@ class SocketGateway {
         const roomProperties = roomKey.split('|');
         if (socket.id !== roomProperties[2]) throw new SocketException(403, 'Player not a host');
 
-        const players = await this.cacheService.getRoomPlayers(roomKey);
         await this.cacheService.deleteRoom(roomKey);
-
-        players.forEach((player) => {
-          delete SocketRooms[player];
-        });
 
         socketService.emitDataToRoom(roomId, SocketEvents.START_GAME, {
           roomSettings,

@@ -4,6 +4,36 @@ import { SocketException } from '../../types/exception';
 import { SocketEvents } from './model/socket.model';
 
 class SocketService {
+  public checkSocketExists(socketId: string): boolean {
+    const io = getIO();
+
+    const target = io.sockets.sockets.get(socketId);
+
+    return !!target;
+  }
+
+  public isClientInRoom(socketId: string, roomId: string): boolean {
+    const io = getIO();
+
+    const target = io.sockets.sockets.get(socketId);
+    if (!target) return false;
+
+    return target.rooms.has(roomId);
+  }
+
+  public getClientRoom(socketId: string): string | null {
+    const io = getIO();
+
+    const target = io.sockets.sockets.get(socketId);
+    if (!target) return null;
+
+    const rooms = Array.from(target.rooms).filter(
+      (roomId) => roomId !== socketId,
+    );
+
+    return rooms[0] ?? null;
+  }
+
   public emitDataToRoom(roomId: string, event: string, data: any) {
     const io = getIO();
 

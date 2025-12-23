@@ -1,5 +1,3 @@
-export const SocketRooms: {[key: string]: string} = {};
-
 export enum SocketEvents {
   // Socket essential events
   PING = 'ping',
