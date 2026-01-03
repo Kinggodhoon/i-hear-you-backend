@@ -203,14 +203,21 @@ class SocketGateway {
         if (players.length >= +roomProperties[1]) throw new SocketException(409, 'Room is full');
 
         await this.cacheService.addPlayerToRoom(roomKey, socket.id);
-        players.push(socket.id);
 
         // socket join in room
         await socket.join(roomId);
 
+        // exception emit to guest client
+        socketService.emitDataToUser(socket.id, SocketEvents.ENTER_ROOM, {
+          enterPlayer: socket.id,
+          players: [...players, socket.id],
+          hostPlayer: roomProperties[2],
+        });
+
+        // emit to room players
         socketService.emitDataToRoom(roomId, SocketEvents.ENTER_ROOM, {
           enterPlayer: socket.id,
-          players,
+          players: [...players, socket.id],
           hostPlayer: roomProperties[2],
         });
       } catch (err) {
@@ -220,7 +227,7 @@ class SocketGateway {
     });
 
     // Peer kicked from room
-    socket.on(SocketEvents.KICK_PLAYER, async ({ roomId, kickedPlayerId }: { roomId: string, kickedPlayerId: string}) => {
+    socket.on(SocketEvents.KICK_PLAYER, async ({ roomId, kickedPlayerId }: { roomId: string, kickedPlayerId: string }) => {
       try {
         // player cache to room
         const roomKey = await this.cacheService.getRoomKey(roomId);
@@ -297,7 +304,7 @@ class SocketGateway {
       }
     });
 
-    socket.on(SocketEvents.START_GAME, async ({ roomId, roomSettings }: { roomId: string, roomSettings: RoomSetting}) => {
+    socket.on(SocketEvents.START_GAME, async ({ roomId, roomSettings }: { roomId: string, roomSettings: RoomSetting }) => {
       try {
         const roomKey = await this.cacheService.getRoomKey(roomId);
         if (!roomKey) throw new SocketException(404, 'RoomKey not found');
