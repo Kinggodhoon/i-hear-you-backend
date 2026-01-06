@@ -1,0 +1,4 @@
+@contentType = application/json
+
+GET http://localhost:3000/v1/quizmaps
+Content-type: {{contentType}}

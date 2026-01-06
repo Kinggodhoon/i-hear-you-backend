@@ -19,4 +19,9 @@ export interface Configuration {
     secretKey: string;
     expiryInSeconds: number;
   }
+
+  readonly CDN_INFO: {
+    baseUrl: string;
+    metadataPath: string;
+  }
 }

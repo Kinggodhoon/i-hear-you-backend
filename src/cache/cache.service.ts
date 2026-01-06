@@ -2,6 +2,7 @@ import Redis from 'ioredis';
 
 import Config from '../config/Config';
 import { MeteredCredential, TurnIceServer } from '../application/turn/model/turn.model';
+import { Quizmap } from '../application/quizmaps/model/quizmaps.model';
 
 class CacheService {
   private static singleton: CacheService;
@@ -45,6 +46,28 @@ class CacheService {
       const plainTurnIceServers = await this.redis!.get('turn_ice_servers');
 
       return plainTurnIceServers;
+    }
+
+    return null;
+  }
+
+  public createQuizmaps = async (quizmaps: Array<Quizmap>): Promise<void> => {
+    if (!this.redis) return;
+
+    const redisPing = await this.redis!.ping();
+    if (redisPing === 'PONG') {
+      await this.redis!.set('quizmaps', JSON.stringify(quizmaps));
+    }
+  }
+
+  public getQuizmaps = async (): Promise<string | null> => {
+    if (!this.redis) return null;
+
+    const redisPing = await this.redis!.ping();
+    if (redisPing === 'PONG') {
+      const plainQuizmaps = await this.redis!.get('quizmaps');
+
+      return plainQuizmaps;
     }
 
     return null;
