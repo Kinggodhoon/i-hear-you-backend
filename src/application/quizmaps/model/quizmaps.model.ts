@@ -7,5 +7,5 @@ export interface Quizmap {
 }
 
 export class GetQuizmapsResponse {
-  turnIceServerList: Array<Quizmap>
+  quizmaps: Array<Quizmap>
 }
