@@ -24,4 +24,8 @@ export interface Configuration {
     baseUrl: string;
     metadataPath: string;
   }
+
+  readonly QUIZMAP_ENCRYPT_KEY: string;
+  readonly DISCORD_URI: string;
+  readonly DISCORD_BOT_TOKEN: string;
 }

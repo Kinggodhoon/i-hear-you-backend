@@ -307,6 +307,7 @@ out
 src/config/**
 !src/config/Config.ts
 !src/config/configuration.ts
+src/application/quizmaps/quizmaps.service.ts
 
 # SWAGGER
 docs/swagger-spec.json
